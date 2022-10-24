@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use JWTAuth;
 use Exception;
+use App\Models\Token;
 use Tymon\JWTAuth\Http\Middleware\BaseMiddleware;
 
 
@@ -34,6 +35,13 @@ class JwtMiddleware extends BaseMiddleware
 		        return response()->json(['status' => 'Authorization Token not found'], 404);
 		  }
 		}
-            return $next($request);
+
+		$token_obj = Token::findByValue(auth()->getToken()->get());
+
+		if(!$token_obj){
+			return response()->json(['status' => "Token Invalid"], 403);
+		}
+		
+        return $next($request);
 	}
 }

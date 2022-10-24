@@ -28,4 +28,12 @@ class Token extends Model
     function user() {
         return $this->belongsTo('App\Models\User');
     }
+
+    public static function findByValue($value){
+        $token_obj = Token::where('value', $value)->first();
+
+        if($token_obj) return $token_obj;
+        
+        return null;
+    }
 }
