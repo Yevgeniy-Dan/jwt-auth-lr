@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Token;
 use Validator;
 
 class AuthController extends Controller
@@ -90,18 +91,43 @@ class AuthController extends Controller
     }
 
     protected function respondWithToken($access_token){
-        return response()->json([
+        $response_array = [
             'access_token' => $access_token,
             'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60,
-            'refresh_token' => auth()->claims([
-                'xtype' => 'refresh',
-                'xpair' => auth()->payload()->get('jti')
-            ])
-            ->setTTL(auth()->factory()->getTTL() * 3)
-            ->tokenById(auth()->user()->id),
+            'access_expires_in' => auth()->factory()->getTTL() * 60,
+        ];
+
+        $access_token_obj = Token::create([
+            'user_id' => auth()->user()->id,
+            'value' => $access_token,
+            'jti' => auth()->payload()->get('jti'),
+            'type' => auth()->payload()->get('xtype'),
+            'payload' => auth()->payload()->toArray(),
+        ]);
+
+        $refresh_token = auth()->claims([
+            'xtype' => 'refresh',
+            'xpair' => auth()->payload()->get('jti')
+        ])->setTTL(auth()->factory()->getTTL() * 3)->tokenById(auth()->user()->id);
+
+        $response_array += [
+            'refresh_token' => $refresh_token,
             'refresh_expires_in' => auth()->factory()->getTTL() * 60
-        ]);        
+        ];
+
+        $refresh_token_obj = Token::create([
+            'user_id' => auth()->user()->id,
+            'value' => $refresh_token,
+            'jti' => auth()->setToken($refresh_token)->payload()->get('jti'),
+            'type' => auth()->setToken($refresh_token)->payload()->get('xtype'),
+            'pair' => $access_token_obj->id,
+            'payload' => auth()->setToken($refresh_token)->payload()->toArray(),
+        ]);
+
+        $access_token_obj->pair = $refresh_token_obj->id;
+        $access_token_obj->save();
+
+        return response()->json($response_array);        
     }
 }
 
