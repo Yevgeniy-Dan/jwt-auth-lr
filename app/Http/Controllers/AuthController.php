@@ -11,6 +11,8 @@ class AuthController extends Controller
     public function __construct()
     {
         $this->middleware('jwt.verify', ['except' => ['login', 'register']]);
+        $this->middleware('jwt.xauth', ['except' => ['login', 'register', 'refresh']]);
+        $this->middleware('jwt.xrefresh', ['only' => ['refresh']]);
     }
 
     public function login(Request $request)
@@ -81,12 +83,15 @@ class AuthController extends Controller
     }
 
     public function refresh(Request $request){
-        return $this->respondWithToken(auth()->refresh());
+        $access_token = auth()->claims(['xtype' => 'auth'])->refresh(true, true);
+
+        auth()->setToken($access_token);
+        return $this->respondWithToken($access_token);
     }
 
-    protected function respondWithToken($token){
+    protected function respondWithToken($access_token){
         return response()->json([
-            'access_token' => $token,
+            'access_token' => $access_token,
             'token_type' => 'bearer',
             'expires_in' => auth()->factory()->getTTL() * 60,
             'refresh_token' => auth()->claims([
