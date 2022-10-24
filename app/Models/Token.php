@@ -36,4 +36,9 @@ class Token extends Model
         
         return null;
     }
+
+    public static function findPairByValue($token){
+        $token_obj = self::findByValue($token);
+        return Token::find($token_obj->pair);
+    }
 }

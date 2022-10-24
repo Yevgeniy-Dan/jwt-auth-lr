@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Token;
+use Exception;
 use Validator;
 
 class AuthController extends Controller
@@ -75,11 +76,26 @@ class AuthController extends Controller
     }
 
     public function logout(Request $request){
+        $refresh_token_obj = Token::findPairByValue(auth()->getToken()->get());
         auth()->logout();
+        auth()->setToken($refresh_token_obj->value)->logout();
 
         return response()->json([
             'status' => "success",
             'message' => "Successfully logged out"
+        ]);
+    }
+
+    public function logoutall(Request $request){
+        foreach (auth()->user()->token as $token_obj) {
+            try {
+                auth()->setToken($token_obj->value)->invalidate(true);
+            } catch (Exception $e) { }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Successfulle logged out from all devices',
         ]);
     }
 
