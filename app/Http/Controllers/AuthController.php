@@ -26,7 +26,7 @@ class AuthController extends Controller
             ], 422);
         }
 
-        if(!$token = auth()->attempt($validator->validated())){
+        if(!$token = auth()->claims(['xtype' => 'auth'])->attempt($validator->validated())){
             return response()->json([
                 'status' => 'error',
                 'message' => 'Username or password not recognised.'
@@ -88,7 +88,14 @@ class AuthController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60
+            'expires_in' => auth()->factory()->getTTL() * 60,
+            'refresh_token' => auth()->claims([
+                'xtype' => 'refresh',
+                'xpair' => auth()->payload()->get('jti')
+            ])
+            ->setTTL(auth()->factory()->getTTL() * 3)
+            ->tokenById(auth()->user()->id),
+            'refresh_expires_in' => auth()->factory()->getTTL() * 60
         ]);        
     }
 }
