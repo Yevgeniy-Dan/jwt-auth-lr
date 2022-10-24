@@ -23,4 +23,12 @@ Route::group([
     Route::post('logout', [AuthController::class, 'logout']);
     Route::post('refresh', [AuthController::class, 'refresh']);
     Route::post('me', [AuthController::class, 'me']);
+    Route::post('register', [AuthController::class, 'register']);
 });
+
+Route::any('{any}', function(){
+    return response()->json([
+        'status' => 'error',
+        'message' => 'Resource not found'
+    ], 404);
+})->where('any', '.*');
