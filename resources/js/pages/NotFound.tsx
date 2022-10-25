@@ -1,3 +1,5 @@
+import React from "react";
+
 const NotFound: React.FC = () => {
     return <h2>Not Found</h2>;
 };

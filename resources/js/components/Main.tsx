@@ -1,6 +1,5 @@
-import React, { useEffect } from "react";
+import React from "react";
 import ReactDOM from "react-dom";
-import { useAppDispatch } from "../hooks/redux";
 import { BrowserRouter } from "react-router-dom";
 
 import { Provider } from "react-redux";

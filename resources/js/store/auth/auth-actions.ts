@@ -25,7 +25,7 @@ export const register = (name: string, email: string, password: string) => {
                     accessToken: response.data.access_token,
                 })
             );
-        } catch (error) {
+        } catch (error: any) {
             let message: string[] | {} = error.response?.data?.message;
 
             dispatch(
@@ -47,7 +47,7 @@ export const login = (email: string, password: string) => {
                     accessToken: response.data.access_token,
                 })
             );
-        } catch (error) {
+        } catch (error: any) {
             let message: any = error.response?.data?.message;
 
             dispatch(
@@ -64,7 +64,7 @@ export const logout = () => {
         try {
             const response = await AuthService.logout();
             dispatch(authActions.logout());
-        } catch (error) {
+        } catch (error: any) {
             let errorMessage: string =
                 error.response?.data?.message || "Unexpected error";
             dispatch(

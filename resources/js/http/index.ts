@@ -3,7 +3,7 @@ import { AuthResponse } from "../models/response/AuthResponse";
 import store from "../store";
 import { authActions } from "../store/auth/auth-slice";
 
-export const API_URL = "http://localhost:8000/api/auth";
+export const API_URL = import.meta.env.VITE_APP_URL + "/api/auth";
 
 const api = axios.create({
     withCredentials: true,
@@ -42,7 +42,7 @@ api.interceptors.response.use(
                     authActions.refreshAccessToken(response.data.access_token)
                 );
                 return api.request(originalRequest);
-            } catch (error) {
+            } catch (error: any) {
                 if (error.response.status === 401) {
                     dispatch(authActions.logout());
                 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Container, Form, Button, Alert } from "react-bootstrap";
+import { Container, Form, Button } from "react-bootstrap";
 import { register } from "../../store/auth/auth-actions";
 import { useAppDispatch, useAppSelector } from "../../hooks/redux";
 import ServerError from "../Layout/Error";
