@@ -23,7 +23,7 @@ class JwtXRefresh extends BaseMiddleware
 		$payload = JWTAuth::payload();
 		
 		if ( $payload->get('xtype') != 'refresh' ){
-			return response()->json(['status' => 'Token Misused'], 406);
+			return response()->json(['message' => 'Token Misused'], 406);
 		}
 		
         return $next($request);

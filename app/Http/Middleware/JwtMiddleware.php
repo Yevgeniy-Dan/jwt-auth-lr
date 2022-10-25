@@ -23,23 +23,34 @@ class JwtMiddleware extends BaseMiddleware
 	public function handle($request, Closure $next)
 	{
 		try {
-		   $user = JWTAuth::parseToken()->authenticate();
+			$prefix = $request->route()->getPrefix();
+        	$path = str_replace($prefix, '', $request->route()->uri);
+
+			$authHeader = $request->header('Authorization');
+
+			
+			if($path == '/refresh'){
+				$request->headers->set('Authorization', 'Bearer ' . $request->cookie('refreshToken'));
+			}
+
+			$user = JWTAuth::parseToken()->authenticate();
  		} catch (Exception $e) {
         	  if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenInvalidException){
-		    return response()->json(['status' => 'Token is Invalid'], 403);
+		    return response()->json(['message' => 'Token is Invalid'], 403);
 		  }else if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenExpiredException){
-			return response()->json(['status' => 'Token is Expired'], 401);
+			return response()->json(['message' => 'Token is Expired'], 401);
 		  }else if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenBlacklistedException){
-			return response()->json(['status' => 'Token is Blacklisted'], 400);
+			return response()->json(['message' => 'Token is Blacklisted'], 400);
 		  }else{
-		        return response()->json(['status' => 'Authorization Token not found'], 404);
+		        return response()->json(['message' => 'Authorization Token not found'], 404);
 		  }
 		}
 
+		
 		$token_obj = Token::findByValue(auth()->getToken()->get());
 
 		if(!$token_obj){
-			return response()->json(['status' => "Token Invalid"], 403);
+			return response()->json(['message' => "Token Invalid"], 403);
 		}
 		
         return $next($request);

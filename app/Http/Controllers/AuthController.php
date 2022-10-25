@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use App\Models\User;
 use App\Models\Token;
 use Exception;
 use Validator;
+use JWTAuth;
 
 class AuthController extends Controller
 {
@@ -80,10 +82,7 @@ class AuthController extends Controller
         auth()->logout();
         auth()->setToken($refresh_token_obj->value)->logout();
 
-        return response()->json([
-            'status' => "success",
-            'message' => "Successfully logged out"
-        ]);
+        return $this->logoutResponse($request, 'Successfull logged out');
     }
 
     public function logoutall(Request $request){
@@ -92,17 +91,25 @@ class AuthController extends Controller
                 auth()->setToken($token_obj->value)->invalidate(true);
             } catch (Exception $e) { }
         }
+        
+        return $this->logoutResponse($request, 'Successfull logged out from all devices');
+    }
+
+    protected function logoutResponse(Request $request, $message) {
+        $refreshTokenCookie = $request->cookie('refreshToken');
+        \Cookie::queue(\Cookie::forget($refreshTokenCookie));
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Successfulle logged out from all devices',
-        ]);
+            'message' => $message,
+        ])->withoutCookie('refreshToken');
     }
 
     public function refresh(Request $request){
         $access_token = auth()->claims(['xtype' => 'auth'])->refresh(true, true);
 
         auth()->setToken($access_token);
+     
         return $this->respondWithToken($access_token);
     }
 
@@ -111,6 +118,7 @@ class AuthController extends Controller
             'access_token' => $access_token,
             'token_type' => 'bearer',
             'access_expires_in' => auth()->factory()->getTTL() * 60,
+            'username' => auth()->user()->name
         ];
 
         $access_token_obj = Token::create([
@@ -126,10 +134,10 @@ class AuthController extends Controller
             'xpair' => auth()->payload()->get('jti')
         ])->setTTL(auth()->factory()->getTTL() * 3)->tokenById(auth()->user()->id);
 
-        $response_array += [
-            'refresh_token' => $refresh_token,
-            'refresh_expires_in' => auth()->factory()->getTTL() * 60
-        ];
+        // $response_array += [
+        //     'refresh_token' => $refresh_token,
+        //     'refresh_expires_in' => auth()->factory()->getTTL() * 60
+        // ];
 
         $refresh_token_obj = Token::create([
             'user_id' => auth()->user()->id,
@@ -143,7 +151,7 @@ class AuthController extends Controller
         $access_token_obj->pair = $refresh_token_obj->id;
         $access_token_obj->save();
 
-        return response()->json($response_array);        
+        return response()->json($response_array)->withCookie(cookie('refreshToken', $refresh_token, auth()->factory()->getTTL() * 60 * 1000));    //ms    
     }
 }
 
